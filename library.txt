@@ -1,0 +1,380 @@
+//import java.beans.Statement;
+import java.sql.*;
+import java.util.Scanner;
+import javax.swing.*;
+import java.nio.charset.StandardCharsets;
+//import java.sql.*;
+//import java.util.Scanner;
+public class library implements BookInterface,UserInterface,CartInterface,Main{
+    Scanner sc = new Scanner(System.in);
+    private static Connection con ;
+    //private static Statement stm;
+    static Statement stm;
+    public static void main(String[] args) throws SQLException {
+
+        try {
+            //Connection con;
+            String address = "jdbc:mysql://localhost:3306/book";
+            String user = "root";
+            String pass = "root";
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            con = DriverManager.getConnection(address, user, pass);
+            stm = con.createStatement();
+            library op=new library();
+            op.option();
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public  void insert() throws SQLException {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Book Name :");
+        String bookname = sc.next();
+        System.out.println("Enter Prize of book :");
+        int prize = sc.nextInt();
+        System.out.println("Enter Number of copies :");
+        int no_of_copies = sc.nextInt();
+        System.out.println("Enter Author of book :");
+        String writer = sc.next();
+        System.out.println("Enter Year of publish:");
+        int year_of_publish = sc.nextInt();
+        String sqlInsert = "insert into books values(?,?,?,?,?)";
+        System.out.println(con);
+        PreparedStatement pstm = con.prepareStatement(sqlInsert);
+        pstm.setString(1, bookname);
+        pstm.setInt(2, prize);
+        pstm.setInt(3, no_of_copies);
+        pstm.setString(4, writer);
+        pstm.setInt(5, year_of_publish);
+        int status = pstm.executeUpdate();
+
+        if (status == 0) {
+            System.out.println("Enter different Book Name ");
+        } else {
+            System.out.println("Insertion done ");
+        }
+    }
+
+
+
+
+    @Override
+    public void delete() throws SQLException {
+        System.out.println("Enter the book name to delete the book");
+        String bookname=sc.next();
+        String sqlDelete="delete from book where bookname='"+bookname+"'";
+        int deleteStatus=stm.executeUpdate(sqlDelete);
+        if(deleteStatus==0){
+            System.out.println("Enter the Book name which is present in database ");
+        }else {
+            System.out.println("Deletion done ");
+        }
+
+    }
+
+    @Override
+    public void display() throws SQLException {
+        String sqlQuery = "select * from books";
+        ResultSet res = stm.executeQuery(sqlQuery);
+        while (res.next()) {
+            System.out.println("Book name :" + res.getString(1) + "\tprize :" + res.getInt(2) + "\tNumber of copies : :" + res.getInt(3) + "\tWriter :" + res.getString(4) +"\tYear of publish :" + res.getInt(5));
+        }
+
+
+    }
+
+    @Override
+    public void adduser() throws SQLException {
+        System.out.println("Enter user id:");
+        int userid = sc.nextInt();
+        System.out.println("Enter userName :");
+        String username = sc.next();
+        System.out.println("Enter password :");
+        String password = sc.next();
+        System.out.println("Enter place :");
+        String place = sc.next();
+        String sqlInsert = "insert into user values(?,?,?,?)";
+        PreparedStatement pstm = con.prepareStatement(sqlInsert);
+        pstm.setInt(1, userid);
+        pstm.setString(2, username);
+        pstm.setString(3, password);
+        pstm.setString(4, place);
+        int status = pstm.executeUpdate();
+        if (status == 0) {
+            System.out.println("Enter different user id ");
+        } else {
+            System.out.println("Insertion done ");
+        }
+
+    }
+
+    @Override
+    public void deleteuser() throws SQLException {
+        System.out.println("Enter the user id to delete the user");
+        int userid=sc.nextInt();
+        String sqlDelete="delete from user where userid="+userid+"";
+        int deleteStatus=stm.executeUpdate(sqlDelete);
+        if(deleteStatus==0){
+            System.out.println("Enter the name which is present in database ");
+        }else {
+            System.out.println("Deletion done ");
+        }
+
+    }
+
+    @Override
+    public void updateuser() throws SQLException {
+        System.out.println("Enter the user id to update the user name ");
+        int userid=sc.nextInt();
+        System.out.println("Enter new name: ");
+        String newName= sc.next();
+        String sqlUpdate="update user set userName='"+newName+"' where u_id="+userid+"";
+        int updateStatus=stm.executeUpdate(sqlUpdate);
+        if(updateStatus==0){
+            System.out.println("Enter the user id which is present in database ");
+        }else {
+            System.out.println("Update done ");
+        }
+
+    }
+
+    @Override
+    public void displayuser() throws SQLException {
+        String sqlQuery = "select * from user";
+        ResultSet res = stm.executeQuery(sqlQuery);
+        while (res.next()) {
+            System.out.println("User ID :" + res.getInt(1) + "\tUser Name :" + res.getString(2) + "\tPassword :" + res.getString(3) + "\tPlace :" + res.getString(4));
+        }
+    }
+
+    @Override
+    public void update() throws SQLException {
+        System.out.println("Enter the book name to change the author");
+        String  bookname = sc.next();
+        System.out.println("Enter new name: ");
+        String writer = sc.next();
+        String sqlUpdate = "update book set author='"+writer+"' where bookName='" + bookname + "'";
+        int updateStatus = stm.executeUpdate(sqlUpdate);
+        if (updateStatus == 0) {
+            System.out.println("Enter the book which is present in database ");
+        } else {
+            System.out.println("Update done ");
+        }
+
+    }
+
+    @Override
+    public void addbooktocart() throws SQLException {
+        int noOfCopies = 0;
+        System.out.println("Enter the user_id");
+        int userid = sc.nextInt();
+        System.out.println("Enter book Name to add in cart");
+        String bookname = sc.next();
+        System.out.println("Enter no fo copies to add in cart");
+        int noofcopies = sc.nextInt();
+        String checkCopies = "select noofcopies from book where bookname='" + bookname + "'";
+        ResultSet resNoOfCopies = stm.executeQuery(checkCopies);
+        while (resNoOfCopies.next()) {
+            noOfCopies = resNoOfCopies.getInt(1);
+        }
+        if (noOfCopies >= noofcopies) {
+            String sqlInsertBookInCart = "insert into cart values('" + bookname + "'," + userid + "," + noofcopies + ")";
+            int status = stm.executeUpdate(sqlInsertBookInCart);
+            noOfCopies = noOfCopies - noofcopies;
+            if (status == 0) {
+                System.out.println("Enter different Book Name ");
+            } else {
+                System.out.println("Insertion into cart done ");
+            }
+            if (status > 0) {
+                if (noOfCopies > 0) {
+                    String decrementCopies = "update book set noOfCopies=" + noOfCopies + " where bookName='" + bookname + "'";
+                    stm.executeUpdate(decrementCopies);
+                } else {
+                    String deleteBook = "delete from book where bookName='" + bookname + "'";
+                    stm.executeUpdate(deleteBook);
+                }
+            }
+        } else {
+            System.out.println("Book not present");
+
+
+        }
+    }
+
+    @Override
+    public void deletebookfromcart() throws SQLException {
+        int noOfCopies=0;
+        int  bookCopies=0;
+        System.out.println("Enter userid");
+        int userid=sc.nextInt();
+        System.out.println("Enter book name to delete from cart");
+        String bookname=sc.next();
+        String queryCheck="select noofcopies from cart where u_id="+userid+" and bookname='"+bookname+"'";
+        ResultSet res=stm.executeQuery(queryCheck);
+        while (res.next()){
+            noOfCopies=noOfCopies+res.getInt(1);
+        }
+        String deleteBook="delete from cart where userid="+userid+" and bookname='"+bookname+"'";
+        int status=stm.executeUpdate(deleteBook);
+        if(status>0){
+            System.out.println("Deletion done in cart");
+            String checkCopiesInBook="select noofcopies from book where bookname='"+bookname+"'";
+            ResultSet resCheck=stm.executeQuery(checkCopiesInBook);
+            while (resCheck.next()){
+                bookCopies=resCheck.getInt(1);
+            }
+            bookCopies=bookCopies+noOfCopies;
+
+            String updateBook="update book set noOfCopies="+bookCopies+" where bookName='"+bookname+"'";
+            stm.executeUpdate(updateBook);
+        }
+        else {
+            System.out.println("Book not present in cart");
+        }
+    }
+
+
+    @Override
+    public void displaybookfromcart() throws SQLException {
+        System.out.println("Enter u_id to show the data");
+        int userid=sc.nextInt();
+        String sqlDisplayCart="select bookname,noofcopies from cart where userid="+userid+"";
+        ResultSet res=stm.executeQuery(sqlDisplayCart);
+        while (res.next()){
+            System.out.println("Book Name: "+res.getString(1)+" No of Copies: "+res.getInt(2));
+        }
+    }
+
+
+    @Override
+    public void checkuserinlist() throws SQLException {
+        int count=0;
+        System.out.println("Enter user id to check whether the user is present or not :");
+        int userid=sc.nextInt();
+        String sqlCheck="select username from user where userid="+userid+"";
+        ResultSet res=stm.executeQuery(sqlCheck);
+        while (res.next()){
+            count++;
+        }
+        if(count>=1){
+            System.out.println("user is present and can perform task");
+        }
+        //return count;
+
+    }
+
+    @Override
+    public void option() throws SQLException, ClassNotFoundException {
+        while (true) {
+            System.out.println("please chose your option");
+            System.out.println("1.Book\n2.User\n3.Cart\n4.Exit");
+            int option = sc.nextInt();
+            switch (option) {
+                case 1:
+                    bookoperation();
+                    break;
+                case 2:
+                    useroperation();
+                    break;
+                case 3:
+                    cartoperation();
+                    break;
+                case 4:
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("choose the correct option");
+            }
+        }
+
+    }
+
+    @Override
+    public void bookoperation() throws SQLException, ClassNotFoundException {
+        while (true) {
+            System.out.println("please chose your option");
+            System.out.println("1.Insert\n2.Delete\n3.Display\n4.Update\n5.Home");
+            int option1 = sc.nextInt();
+            switch (option1) {
+                case 1:
+                    insert();
+                    break;
+                case 2:
+                    delete();
+                    break;
+                case 3:
+                    display();
+                    break;
+                case 4:update();
+                    break;
+                case 5:
+                    option();
+                    break;
+                default:
+                    System.out.println("choose the correct option");
+            }
+        }
+
+    }
+
+    @Override
+    public void useroperation() throws SQLException, ClassNotFoundException {
+        while (true) {
+            System.out.println("please chose your option");
+            System.out.println("1.AddUser\n2.DeleteUser\n3.UpdateUser\n4.DisplayUser\n5.Home");
+            int option2 = sc.nextInt();
+            switch (option2) {
+                case 1:
+                    adduser();
+                    break;
+                case 2:
+                    deleteuser();
+                    break;
+                case 3:
+                    updateuser();
+                    break;
+                case 4:
+                    displayuser();
+                    break;
+                case 5:
+                    option();
+                    break;
+                default:
+                    System.out.println("choose the correct option");
+            }
+        }
+
+    }
+
+    @Override
+    public void cartoperation() throws SQLException, ClassNotFoundException {
+        while (true) {
+            System.out.println("please chose your option");
+            System.out.println("1.Addbook\n2.DeleteBook\n3.DisplayBook\n4.CheckUser\n5.Home");
+            int option3 = sc.nextInt();
+            switch (option3) {
+                case 1:
+                    addbooktocart();
+                    break;
+                case 2:
+                    deletebookfromcart();
+                    break;
+                case 3:
+                    displaybookfromcart();
+                    break;
+                case 4:
+                    checkuserinlist();
+                    break;
+                case 5:
+                    option();
+                    break;
+                default:
+                    System.out.println("choose the correct option");
+            }
+        }
+
+    }
+
+}
